@@ -1,0 +1,207 @@
+---
+title: "Visor de Cuadrantes Urbanos"
+output: 
+  flexdashboard::flex_dashboard:
+    theme: cerulean
+    social: menu
+    source_code: embed
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+defaultEncoding <- "UTF8"
+library(dplyr)
+library(sf)
+library(terra)
+library(raster)
+library(DT)
+library(ggplot2)
+library(plotly)
+library(leaflet)
+library(leaflet.extras)
+library(leafem)
+library(shiny)
+library(shinydashboard)
+library(shinyWidgets)
+library(rgdal)
+library(tidyverse)
+library(rmapshaper)
+library(leaflegend)
+```
+
+```{r datos , warning=FALSE, message=FALSE}
+
+regiones <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/regiones4.geojson",
+         quiet = TRUE)
+  
+cantones <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cantones4.geojson",
+         quiet = TRUE)
+
+cuadrantes <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cuadrantes_.geojson",
+         quiet = TRUE)
+
+
+lista_canton <- unique(cantones$canton)
+lista_canton <- sort(lista_canton)
+lista_canton <- c("Todas", lista_canton)
+
+lista_region <- unique(regiones$Region)
+lista_region <- sort(lista_region)
+lista_region <- c("Todas", lista_region)
+
+
+
+
+
+
+
+```
+
+Mapa
+=====================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+h3("Filtros")
+h2("Región")
+selectInput(
+  inputId = "regiones",
+  label = "Región",
+  choices = lista_region,
+  selected = "Todas"
+)
+h2("Cantones")
+selectInput(
+  inputId = "cantones",
+  label = "Cantón",
+  choices = lista_canton,
+  selected = "Todas"
+)
+
+
+
+#filtrarRegistros <-  reactive({
+#  casco <-
+ #   casos_p %>%
+ #   dplyr::select(canton, provincia, positivos, activos)
+  
+#casos_f <-
+ # casos_f %>%
+  #filter(
+   # activos >= input$activos[1] &
+    # activos <= input$activos[2]
+  #) 
+#casos_f <-
+ # casos_f %>%
+  #filter(
+   #positivos >= input$positivos[1] &
+    #positivos <= input$positivos[2]
+  #)
+  
+#  if (input$provincia != "Todas") {
+ #   casos_f <-
+  #    casos_f %>%
+   #   filter(provincia == input$provincia)
+  #}
+  
+  #if (input$canton != "Todas") {
+   # casos_f <-
+    #  casos_f %>%
+     # filter(canton == input$canton)
+#  }
+  
+ # return(casos_f)
+#})
+
+
+```
+
+
+Row {data-height=650}
+-----------------------------------------------------------------------
+
+### Cuadrantes Urbanos
+
+```{r}
+
+
+bins <- c(1, 2, 3, 4)
+colores <- c(  "#FFFF33", "#B2FFFC", "#4DAF4A")
+pal <- colorBin( colores, cuadrantes$COD_ZONA, bins=bins)
+#renderLeaflet({
+ # registros <-
+  #  filtrarRegistros()
+ 
+
+  #ebais_c <- ebais [registros, , op = st_within]
+  
+  
+  leaflet() %>%
+    addTiles(group = "OSM") %>%
+    addProviderTiles(providers$Esri.NatGeoWorldMap , group = "NatGeo"
+                     ) %>%
+    addProviderTiles(providers$CartoDB.DarkMatter, group = "CartoDB-Black"
+                     ) %>%
+    
+  addPolygons(
+      data = regiones,
+      color = "#00008B",
+      fillOpacity = 0,
+      weight = 1,
+      opacity = 1,
+      stroke = TRUE,
+      group = "Regiones",
+      popup= paste0( "<strong> Región: <strong/>",
+      regiones$Region)
+    ) %>%
+    
+      addPolygons(
+      data = cantones,
+      color = "#32CD32",
+      fillOpacity = 0,
+      weight = 1,
+      opacity = 1,
+      stroke = TRUE,
+      group = "Cantones",
+      popup= paste0( "<strong> Cantón: <strong/>",
+      cantones$canton)
+    ) %>%
+  
+  addPolygons(
+      data = cuadrantes,
+      color = ~pal(COD_ZONA),
+      fillOpacity = 1,
+      weight = 1,
+      opacity = 1,
+      stroke = TRUE,
+      group = "Cuadrantes"
+    ) %>%
+    
+    addLegend(
+      pal = pal,
+      values = cantones$COD_ZONA,
+      opacity = 1,
+      title = "Zona"
+    ) %>%
+  
+    addLayersControl(
+      "bottomleft",
+      baseGroups = c("OSM", "NatGeo", "CartoDB-Black"),
+      overlayGroups = c(
+        "Regiones" , "Cantones" , "Cuadrantes"
+      ),
+      options = layersControlOptions(collapsed = TRUE)
+    ) %>%
+    addScaleBar("bottomright") %>%
+    addMiniMap() %>%
+    addResetMapButton() %>%
+    addFullscreenControl() %>%
+    addControlGPS() %>%
+    addSearchOSM() %>%
+    addMouseCoordinates()
+  
+#})
+```
+
