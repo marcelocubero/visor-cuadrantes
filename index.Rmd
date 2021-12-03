@@ -2,6 +2,7 @@
 title: "Visor de Cuadrantes Urbanos"
 output: 
   flexdashboard::flex_dashboard:
+    orientation: rows
     theme: cerulean
     social: menu
     source_code: embed
@@ -32,8 +33,8 @@ library(leaflegend)
 
 ```{r datos , warning=FALSE, message=FALSE}
 
-regiones <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/regiones4.geojson",
-         quiet = TRUE)
+#regiones <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/regiones4.geojson",
+ #        quiet = TRUE)
   
 cantones <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cantones4.geojson",
          quiet = TRUE)
@@ -46,9 +47,9 @@ lista_canton <- unique(cantones$canton)
 lista_canton <- sort(lista_canton)
 lista_canton <- c("Todas", lista_canton)
 
-lista_region <- unique(regiones$Region)
-lista_region <- sort(lista_region)
-lista_region <- c("Todas", lista_region)
+#lista_region <- unique(regiones$Region)
+#lista_region <- sort(lista_region)
+#lista_region <- c("Todas", lista_region)
 
 
 
@@ -65,16 +66,16 @@ Column {.sidebar}
 -----------------------------------------------------------------------
 ```{r}
 h3("Filtros")
-h2("Región")
-selectInput(
-  inputId = "regiones",
-  label = "Región",
-  choices = lista_region,
-  selected = "Todas"
-)
+#h2("Región")
+#selectInput(
+ # inputId = "regiones",
+  #label = "Región",
+  #choices = lista_region,
+  #selected = "Todas"
+#)
 h2("Cantones")
 selectInput(
-  inputId = "cantones",
+  inputId = "canton",
   label = "Cantón",
   choices = lista_canton,
   selected = "Todas"
@@ -82,38 +83,20 @@ selectInput(
 
 
 
-#filtrarRegistros <-  reactive({
-#  casco <-
- #   casos_p %>%
- #   dplyr::select(canton, provincia, positivos, activos)
+filtrarRegistros <-  reactive({
+  cantones_f <-
+   cantones %>%
+  dplyr::select(canton)
   
-#casos_f <-
- # casos_f %>%
-  #filter(
-   # activos >= input$activos[1] &
-    # activos <= input$activos[2]
-  #) 
-#casos_f <-
- # casos_f %>%
-  #filter(
-   #positivos >= input$positivos[1] &
-    #positivos <= input$positivos[2]
-  #)
+ 
+  if (input$canton != "Todas") {
+    cantones_f <-
+      cantones_f %>%
+      filter(canton == input$canton)
+  }
   
-#  if (input$provincia != "Todas") {
- #   casos_f <-
-  #    casos_f %>%
-   #   filter(provincia == input$provincia)
-  #}
-  
-  #if (input$canton != "Todas") {
-   # casos_f <-
-    #  casos_f %>%
-     # filter(canton == input$canton)
-#  }
-  
- # return(casos_f)
-#})
+  return(cantones_f)
+})
 
 
 ```
@@ -130,12 +113,14 @@ Row {data-height=650}
 bins <- c(1, 2, 3, 4)
 colores <- c(  "#FFFF33", "#B2FFFC", "#4DAF4A")
 pal <- colorBin( colores, cuadrantes$COD_ZONA, bins=bins)
-#renderLeaflet({
- # registros <-
-  #  filtrarRegistros()
+
+
+renderLeaflet({
+ registros <-
+  filtrarRegistros()
  
 
-  #ebais_c <- ebais [registros, , op = st_within]
+ # cuadrantes_c <- cuadrantes [registros, , op = st_contains]
   
   
   leaflet() %>%
@@ -145,28 +130,28 @@ pal <- colorBin( colores, cuadrantes$COD_ZONA, bins=bins)
     addProviderTiles(providers$CartoDB.DarkMatter, group = "CartoDB-Black"
                      ) %>%
     
-  addPolygons(
-      data = regiones,
-      color = "#00008B",
-      fillOpacity = 0,
-      weight = 1,
-      opacity = 1,
-      stroke = TRUE,
-      group = "Regiones",
-      popup= paste0( "<strong> Región: <strong/>",
-      regiones$Region)
-    ) %>%
+ # addPolygons(
+ #      data = regiones,
+   #    color = "#red",
+     #  fillOpacity = 0,
+      # weight = 1,
+       #opacity = 1,
+       #stroke = TRUE,
+       #group = "Regiones",
+       #popup= paste0( "<strong> Región: <strong/>",
+       #regiones$Region)
+     #) %>%
     
       addPolygons(
-      data = cantones,
-      color = "#32CD32",
+      data = registros,
+      color = "#00008B",
       fillOpacity = 0,
       weight = 1,
       opacity = 1,
       stroke = TRUE,
       group = "Cantones",
       popup= paste0( "<strong> Cantón: <strong/>",
-      cantones$canton)
+      registros$canton)
     ) %>%
   
   addPolygons(
@@ -190,7 +175,7 @@ pal <- colorBin( colores, cuadrantes$COD_ZONA, bins=bins)
       "bottomleft",
       baseGroups = c("OSM", "NatGeo", "CartoDB-Black"),
       overlayGroups = c(
-        "Regiones" , "Cantones" , "Cuadrantes"
+        "Cantones" , "Cuadrantes"
       ),
       options = layersControlOptions(collapsed = TRUE)
     ) %>%
@@ -202,6 +187,15 @@ pal <- colorBin( colores, cuadrantes$COD_ZONA, bins=bins)
     addSearchOSM() %>%
     addMouseCoordinates()
   
-#})
+})
+  
+  
+  
+  
+ 
 ```
-
+ Row {data-height=150}
+-----------------------------------------------------------------------
+![](https://marcelocubero.github.io/capas_TFG/5.png){width='300px'} 
+![](https://marcelocubero.github.io/capas_TFG/gp.png){width='200px'}
+![](https://marcelocubero.github.io/capas_TFG/INVU.jpg){width='300px'}
