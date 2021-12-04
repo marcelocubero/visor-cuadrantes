@@ -199,3 +199,50 @@ renderLeaflet({
 ![](https://marcelocubero.github.io/capas_TFG/5.png){width='300px'} 
 ![](https://marcelocubero.github.io/capas_TFG/gp.png){width='200px'}
 ![](https://marcelocubero.github.io/capas_TFG/INVU.jpg){width='300px'}
+
+
+
+
+Información de Cuadrantes {data-orientation=rows}
+===================================== 
+
+Row {data-height=350}
+-------------------------------------
+### Información de Cuadrantes
+
+
+```{r}
+cuadrantes %>%
+  st_drop_geometry() %>%
+    select(
+      Cantón= CANTON,
+      Poblado= POBLADO,
+      Zona= NOMB_ZONA,
+     " Área (ha)" = HECTAREAS
+      
+      
+    ) %>%
+    datatable(
+      escape=FALSE, options = list(
+      language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
+    ))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
