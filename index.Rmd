@@ -14,6 +14,7 @@ library(flexdashboard)
 defaultEncoding <- "UTF8"
 library(dplyr)
 library(sf)
+library(s2)
 library(terra)
 library(raster)
 library(DT)
@@ -39,9 +40,11 @@ library(leaflegend)
 cantones <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cantones4.geojson",
          quiet = TRUE)
 
-cuadrantes <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cuadrantes_.geojson",
+cuadrantes <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cuadrantes_1.geojson",
          quiet = TRUE)
 
+mep <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cr_mep.geojson",
+         quiet = TRUE)
 
 lista_canton <- unique(cantones$canton)
 lista_canton <- sort(lista_canton)
@@ -110,9 +113,14 @@ Row {data-height=650}
 ```{r}
 
 
-bins <- c(1, 2, 3, 4)
-colores <- c(  "#FFFF33", "#B2FFFC", "#4DAF4A")
-pal <- colorBin( colores, cuadrantes$COD_ZONA, bins=bins)
+
+colores <- c( "#4DAF4A" , "#B2FFFC","#FFFF33" )
+c_zona <- levels(as.factor(cuadrantes$NOMB_ZONA))
+paleta <- colorFactor(palette = colores, domain = c_zona)
+
+
+
+
 
 
 renderLeaflet({
@@ -120,8 +128,10 @@ renderLeaflet({
   filtrarRegistros()
  
 
- # cuadrantes_c <- cuadrantes [registros, , op = st_contains]
+ mep_f <- mep [registros, , op = st_within]
   
+# cuadrantes_f <- cuadrantes [registros, , op = st_within]
+ 
   
   leaflet() %>%
     addTiles(group = "OSM") %>%
@@ -156,7 +166,7 @@ renderLeaflet({
   
   addPolygons(
       data = cuadrantes,
-      color = ~pal(COD_ZONA),
+      color = ~paleta(NOMB_ZONA),
       fillOpacity = 1,
       weight = 1,
       opacity = 1,
@@ -165,17 +175,31 @@ renderLeaflet({
     ) %>%
     
     addLegend(
-      pal = pal,
-      values = cantones$COD_ZONA,
+      pal = paleta,
+      values = cuadrantes$NOMB_ZONA,
       opacity = 1,
       title = "Zona"
     ) %>%
-  
+    
+    
+     addCircleMarkers(
+      data = mep_f,
+      radius = 1,
+      fillColor = 'blue',
+      fillOpacity = 1,
+      popup = paste0(
+      mep_f$Nivel,
+       ":<br>",
+      mep_f$Nombre   
+       ),
+      group= "Centros Educativos"
+     ) %>%
+    
     addLayersControl(
       "bottomleft",
       baseGroups = c("OSM", "NatGeo", "CartoDB-Black"),
       overlayGroups = c(
-        "Cantones" , "Cuadrantes"
+        "Cantones" , "Cuadrantes" , "Centros Educativos"
       ),
       options = layersControlOptions(collapsed = TRUE)
     ) %>%
