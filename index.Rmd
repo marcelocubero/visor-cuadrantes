@@ -14,7 +14,6 @@ library(flexdashboard)
 defaultEncoding <- "UTF8"
 library(dplyr)
 library(sf)
-library(s2)
 library(terra)
 library(raster)
 library(DT)
@@ -56,7 +55,7 @@ lista_canton <- c("Todas", lista_canton)
 
 
 
-
+sf::sf_use_s2(FALSE)
 
 
 
@@ -127,10 +126,11 @@ renderLeaflet({
  registros <-
   filtrarRegistros()
  
+mep_f <- mep [registros, , op = st_within]
+cuadrantes_f <-  cuadrantes [  registros  , , op = st_intersects]
 
- mep_f <- mep [registros, , op = st_within]
-  
-# cuadrantes_f <- cuadrantes [registros, , op = st_within]
+ 
+
  
   
   leaflet() %>%
@@ -165,7 +165,7 @@ renderLeaflet({
     ) %>%
   
   addPolygons(
-      data = cuadrantes,
+      data = cuadrantes_f,
       color = ~paleta(NOMB_ZONA),
       fillOpacity = 1,
       weight = 1,
