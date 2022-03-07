@@ -45,6 +45,9 @@ cuadrantes <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cuadra
 mep <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/cr_mep.geojson",
          quiet = TRUE)
 
+localidades <- st_read("/vsicurl/https://marcelocubero.github.io/capas_TFG/localidades2.geojson",
+         quiet = TRUE)
+
 lista_canton <- unique(cantones$canton)
 lista_canton <- sort(lista_canton)
 lista_canton <- c("Todas", lista_canton)
@@ -104,7 +107,7 @@ filtrarRegistros <-  reactive({
 ```
 
 
-Row {data-height=650}
+Row {data-height=500}
 -----------------------------------------------------------------------
 
 ### Cuadrantes Urbanos
@@ -117,8 +120,19 @@ colores <- c( "#4DAF4A" , "#B2FFFC","#FFFF33" )
 c_zona <- levels(as.factor(cuadrantes$NOMB_ZONA))
 paleta <- colorFactor(palette = colores, domain = c_zona)
 
+icon_1 <- makeAwesomeIcon(
+  icon= "graduation-cap",
+  iconColor = "#87CEEB",
+  markerColor = "blue",
+  library = "fa"
+)
 
-
+icon_2 <- makeAwesomeIcon(
+  icon= "location-arrow",
+  iconColor = "#00FF7F",
+  markerColor = "#713d35",
+  library = "fa"
+)
 
 
 
@@ -127,6 +141,9 @@ renderLeaflet({
   filtrarRegistros()
  
 mep_f <- mep [registros, , op = st_within]
+localidades_f <- localidades [registros, , op = st_within]
+
+
 cuadrantes_f <-  cuadrantes [  registros  , , op = st_intersects]
 
  
@@ -171,7 +188,9 @@ cuadrantes_f <-  cuadrantes [  registros  , , op = st_intersects]
       weight = 1,
       opacity = 1,
       stroke = TRUE,
-      group = "Cuadrantes"
+      group = "Cuadrantes",
+      popup= paste0( "<strong> Cuadrante: <strong/>",
+      cuadrantes_f$POBLADO)
     ) %>%
     
     addLegend(
@@ -182,11 +201,9 @@ cuadrantes_f <-  cuadrantes [  registros  , , op = st_intersects]
     ) %>%
     
     
-     addCircleMarkers(
+     addAwesomeMarkers(
       data = mep_f,
-      radius = 1,
-      fillColor = 'blue',
-      fillOpacity = 1,
+      icon= icon_1,
       popup = paste0(
       mep_f$Nivel,
        ":<br>",
@@ -195,11 +212,26 @@ cuadrantes_f <-  cuadrantes [  registros  , , op = st_intersects]
       group= "Centros Educativos"
      ) %>%
     
+    
+    
+     addAwesomeMarkers(
+      data = localidades_f,
+      icon= icon_2,
+      popup = paste0(
+      localidades_f$nombre   
+       ),
+      group= "Localidades"
+     ) %>%  
+    
+    
+    
+    
+    
     addLayersControl(
       "bottomleft",
       baseGroups = c("OSM", "NatGeo", "CartoDB-Black"),
       overlayGroups = c(
-        "Cantones" , "Cuadrantes" , "Centros Educativos"
+        "Cantones" , "Cuadrantes" , "Centros Educativos" , "Localidades"
       ),
       options = layersControlOptions(collapsed = TRUE)
     ) %>%
@@ -236,7 +268,16 @@ Row {data-height=350}
 
 
 ```{r}
-cuadrantes %>%
+
+renderDT({
+ registros <-
+  filtrarRegistros()
+ 
+
+cuadrantes_f <-  cuadrantes [  registros  , , op = st_intersects]
+
+
+cuadrantes_f %>%
   st_drop_geometry() %>%
     select(
       Cantón= CANTON,
@@ -250,6 +291,11 @@ cuadrantes %>%
       escape=FALSE, options = list(
       language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
     ))
+
+})
+
+
+
 ```
 
 
